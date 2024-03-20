@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Gerenciador de Carros</title>
+    <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 0;
+            background-color: #757575;
+        }
+    
+        form, table {
+            background-color: #c5c5c5;
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+    
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+    
+        input[type="number"], input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border: 1px solid #686868;
+            box-sizing: border-box; /* Para que padding não aumente o tamanho do input */
+        }
+    
+        button {
+            background-color: #8f8f8f;
+            color: white;
+            padding: 10px 20px;
+            border: 1px solid #686868;
+            border-radius: 5px;
+            cursor: pointer;
+            width:100%;
+        }
+    
+        button:hover {
+            background-color: #383838;
+        }
+    
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+    
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+    
+        th, td {
+            text-align: left;
+            padding: 8px;
+        }
+    
+        th {
+            background-color: #f2f2f2;
+        }
+    
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+    </style>
+    
+</head>
+<body>
+    <form>
+    <label for="inputBuscaID">Buscar por id</label>
+    <input type="number" id="inputBuscaID" name="inputBuscaID">
+    <button type="submit" id="buscaID">Buscar</button>
+</form>
+    <button id="visaoGeral" style="margin-top: 20px;">Visão geral</button>
+
+    <div id="app">
+    
+
+    </div>
+
+    <script type="text/babel">
+    const botaoBuscaId = document.getElementById('buscaID')
+    const botaoVisaoGeral = document.getElementById('visaoGeral')
+    const App = () => {
+    const [carros, setCarros] = React.useState([]);
+    const [carroAtual, setCarroAtual] = React.useState(null);
+    React.useEffect(() => {
+        botaoBuscaId.addEventListener('click', function(e){
+            e.preventDefault()
+            const idABuscar = document.getElementById('inputBuscaID').value
+            const idNumber = Number(idABuscar)
+            console.log('Buscar por ID clicado');
+            buscarCarroPorId(idNumber)
+        });
+        botaoVisaoGeral.addEventListener('click', function(event){
+            console.log('Visão geral clicado');
+            fetchCarros(); 
+        });
+        
+    }, []);
+
+    const fetchCarros = async () => {
+    try {
+        const resposta = await fetch('https://ifsp.ddns.net/webservices/carro/carro');
+        const dados = await resposta.json();
+        setCarros(dados);
+        console.log(dados);
+    } catch (error) {
+        console.error("Erro ao buscar dados dos carros:", error);
+    }
+};
+
+    const adicionarCarro = async (novoCarro) => {
+    try {
+        const url = 'https://ifsp.ddns.net/webservices/carro/carro/'; 
+        const resposta = await fetch(url, {
+            method: 'POST', 
+            headers: {
+                'Content-Type': 'application/json', // Indica que o corpo da requisição é um JSON
+            },
+            body: JSON.stringify(novoCarro), 
+        });
+
+        if (resposta.ok) { 
+            console.log("Carro adicionado com sucesso.");
+            fetchCarros(); 
+        } else {
+            console.error('Falha ao adicionar o carro:', resposta.statusText);
+        }
+    } catch (error) {
+        console.error("Erro ao adicionar carro:", error);
+    }
+    };
+
+    const editarCarro = async (id, novoCarro) => {
+        try {
+        const url = `https://ifsp.ddns.net/webservices/carro/carro/${id}`; 
+        const resposta = await fetch(url, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json', // Indica que o corpo da requisição é um JSON
+            },
+            body: JSON.stringify(novoCarro),
+        });
+
+        if (resposta.ok) { 
+            console.log(`Carro com ID ${id} atualizado com sucesso.`);
+            fetchCarros(); 
+        } else {
+            console.error('Falha ao atualizar o carro:', resposta.statusText);
+        }
+    } catch (error) {
+        console.error("Erro ao atualizar carro:", error);
+    }
+    };
+
+    const excluirCarro = async (id) => {
+    try {
+        const url = `https://ifsp.ddns.net/webservices/carro/carro/${id}`;
+        const resposta = await fetch(url, {
+            method: 'DELETE',
+        });
+
+        if (resposta.ok) { 
+            console.log(`Carro com ID ${id} deletado com sucesso.`);
+            fetchCarros(); 
+        } else {
+            console.error('Falha ao excluir o carro:', resposta.statusText);
+        }
+    } catch (error) {
+        console.error("Erro ao excluir carro:", error);
+    }
+};
+    const buscarCarroPorId = async (id) => {
+    try {
+        const url = `https://ifsp.ddns.net/webservices/carro/carro/${id}`; 
+        const resposta = await fetch(url);
+        const carro = await resposta.json(); 
+        
+        if (resposta.ok) {
+            console.log(carro);
+            setCarroAtual(carro) 
+        } else {
+            console.error('Falha ao buscar o carro:', resposta.statusText);
+            return null;
+        }
+    } catch (error) {
+        console.error("Erro ao buscar carro por ID:", error);
+        return null;
+    }
+};
+
+const CarroForm = ({ carroAtual, onFormSubmit }) => {
+    const [carro, setCarro] = React.useState(carroAtual || { nome: '', ano: '', potencia: '', preco: '', fabricante: '' });
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setCarro({ ...carro, [name]: value });
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        if (!carro.nome || !carro.ano || !carro.potencia || !carro.preco || !carro.fabricante) {
+            alert('Por favor, preencha todos os campos.');
+            return;
+        }
+        onFormSubmit(carro);
+        setCarro({ nome: '', ano: '', potencia: '', preco: '', fabricante: '' });
+    };
+
+    return (
+        <form onSubmit={handleSubmit}>
+            <table>
+                <thead>
+                <tr>
+                    <th>Marca</th>
+                    <th>Nome</th>
+                    <th>Ano</th>
+                    <th>Potência</th>
+                    <th>Preço</th>
+                    <th></th>
+                </tr>
+                </thead>
+            <tbody>
+            <tr>
+            <td>
+                <input type="text" name="fabricante" value={carro.fabricante} onChange={handleChange} />
+            </td>
+            <td>
+                <input type="text" name="nome" value={carro.nome} onChange={handleChange} />
+            </td>
+            <td>
+                <input type="number" name="ano" value={carro.ano} onChange={handleChange} />
+            </td>
+            <td>
+                <input type="number" name="potencia" value={carro.potencia} onChange={handleChange} />
+            </td>
+            <td>
+                <input type="number" name="preco" value={carro.preco} onChange={handleChange} />
+            </td>
+            
+            <td><button type="submit">Salvar Carro</button></td></tr>
+            </tbody>
+            </table>
+        
+        </form>
+    );
+};
+
+const selecionarCarroParaEdicao = (id) => {
+        const carroEncontrado = carros.find(carro => carro.id === id);
+        setCarroAtual(carroEncontrado);
+    };
+
+    // Função para resetar carroAtual e recarregar a lista após adicionar/editar
+    const atualizarListaCarros = () => {
+        fetchCarros();
+        setCarroAtual(null);
+    }; 
+        return (
+        <div>
+            <CarroForm carroAtual={carroAtual} onFormSubmit={(carro) => {
+                if (carroAtual) {
+                    editarCarro(carroAtual.id, carro).then(atualizarListaCarros);
+                } else {
+                    adicionarCarro(carro).then(atualizarListaCarros);
+                }
+            }} />
+            <table>
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Marca</th>
+                    <th>Nome</th>
+                    <th>Ano</th>
+                    <th>Potência</th>
+                    <th>Preço</th>
+                    <th>Editar</th>
+                    <th>Excluir</th>
+                </tr>
+                </thead>
+                <tbody>
+                
+                {carros.map(carro => (
+                    <tr key={carro.id}>
+                        <td>{carro.id}</td>
+                        <td>{carro.fabricante}</td>
+                        <td>{carro.nome}</td>
+                        <td>{carro.ano}</td>
+                        <td>{carro.potencia} cv</td>
+                        <td>R${carro.preco}</td>
+                        <td><button onClick={() => selecionarCarroParaEdicao(carro.id)}>Editar</button></td>
+                        <td><button onClick={() => excluirCarro(carro.id)}>Excluir</button></td>
+                    </tr>
+                ))}
+            </tbody>
+            </table>
+        </div>
+    );
+    }
+
+
+
+ReactDOM.render(<App />, document.getElementById('app'));
+
+
+    </script>
+</body>
+</html>
